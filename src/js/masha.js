@@ -133,6 +133,7 @@ MaSha.prototype = {
         if(!hasTouch){
             this.mouseUp = bind(this.mouseUp, this);
             addEvent(document, 'mouseup', this.mouseUp);
+
         } else {
             this.touchEnd = bind(this.touchEnd, this);
             addEvent(document, 'touchend', this.touchEnd);
@@ -184,12 +185,14 @@ MaSha.prototype = {
      */
 
     mouseUp: function(e){
+        if (e.target.className == 'masha-marker') {
+            return;
+        }
         /*
          * Show the marker if any text selected
          */
 
         var markerCoord = getPageXY(e); // outside timeout function because of IE
-        console.log(markerCoord);
         window.setTimeout(bind(function(){
             this.showMarker(markerCoord);
         }, this), 1);
@@ -231,17 +234,15 @@ MaSha.prototype = {
         preventDefault(e);
         stopEvent(e);
 
-        var target = (e.target || e.srcElement);
-
-        if (hasClass(this.marker, 'masha-marker-bar')){
-            if (!hasClass(target, 'masha-social') && !hasClass(target, 'masha-marker')){
-                return;
-            }
-        }
+        //var target = (e.target || e.srcElement);
+        //
+        //if (hasClass(this.marker, 'masha-marker-bar')){
+        //    if (!hasClass(target, 'masha-social') && !hasClass(target, 'masha-marker')){
+        //        return;
+        //    }
+        //}
         removeClass(this.marker, 'show');
-        if (!this.rangeIsSelectable()){
-            return;
-        }
+/*
 
         this.addSelection();
         this.updateHash();
@@ -259,7 +260,7 @@ MaSha.prototype = {
                 var new_url = pattern.replace('{url}', encodeURIComponent(window.location.toString()));
                 this.openShareWindow(new_url);
             }
-        }
+        }*/
     },
  
 
@@ -301,7 +302,7 @@ MaSha.prototype = {
 
     showMarker: function(markerCoord){
         var text = window.getSelection().toString();
-        if (text == '') return;
+        if (!this.rangeIsSelectable(text)) return;
         var coords = this.getMarkerCoords(this.marker, markerCoord);
 
         this.marker.style.top = coords.y + 'px';
@@ -1000,43 +1001,9 @@ MaSha.prototype = {
         }
     },
 
-    rangeIsSelectable: function(){
-        var node, firstNode, lastNode, first=true;
-        var range = this.getFirstRange();
-        if (!range) { return false; }
-        var iterator = range.getElementIterator();
-        while ((node = iterator())){
-            if (node.nodeType == 3 && node.data.match(this.regexp) != null){
-                // first and last TEXT nodes
-                firstNode = firstNode || node;
-                lastNode = node;
-            }
-            // We need to check first element. Text nodes are not checked, so we replace
-            // it for it's parent.
-            node = (first && node.nodeType == 3)? node.parentNode : node;
-            first = false;
-            
-            if (node.nodeType == 1){
-                // Checking element nodes. Check if the element node and all it's parents
-                // till selectable are not ignored
-                var iter_node = node;
-                while (iter_node != this.selectable && iter_node.parentNode){
-                    if (this.isIgnored(iter_node)){
-                        return false;
-                    }
-                    iter_node = iter_node.parentNode;
-                }
-                if (iter_node != this.selectable){ return false; }
-            }
-        }
-        var first_selection = parentWithClass(firstNode, 'user_selection_true');
-        var last_selection = parentWithClass(lastNode, 'user_selection_true');
-        if (first_selection && last_selection){
-            var reg = /(?:^| )(num\d+)(?:$| )/;
-            return (reg.exec(first_selection.className)[1] != 
-                    reg.exec(last_selection.className)[1]);
-        }
-        return true;
+    rangeIsSelectable: function(range){
+        var trimmed = range.trim();
+        return (trimmed != '' && trimmed != undefined);
     },
 
     /*
