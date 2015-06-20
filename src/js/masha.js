@@ -61,7 +61,7 @@ MaSha.defaultOptions = {
     'onMark': null,
     'onUnmark': null,
     'onHashRead': function(){
-        var elem = firstWithClass(this.selectable, 'user_selection_true');
+        var elem = firstWithClass(document, 'user_selection_true');
         if(elem && !this.hashWasRead) {
             this.hashWasRead = true;
             window.setTimeout(function(){
@@ -98,7 +98,7 @@ function getAllTextNodes() {
 
 MaSha.prototype = {
     init: function(){ // domready
-        //this.selectable = getAllTextNodes();
+        //document = getAllTextNodes();
         if (typeof this.options.marker == 'string'){
             this.marker = document.getElementById(this.options.marker);
             if (this.marker === null){
@@ -116,14 +116,14 @@ MaSha.prototype = {
         }
         this.regexp = new RegExp(this.options.regexp, 'ig');
 
-        //if (!this.selectable) return;
+        //if (!document) return;
 
         this.isIgnored = this.constructIgnored(this.options.ignored);
     
         if (this.options.selectMessage){
             this.initMessage();
         }
-        //cleanWhitespace(this.selectable);
+        //cleanWhitespace(document);
     
         // enumerate block elements containing a text
         //this.enumerateElements();
@@ -160,20 +160,20 @@ MaSha.prototype = {
             this.hideMessage();
         }
 
-        removeEvent(this.selectable, 'mouseup', this.mouseUp);
-        removeEvent(this.selectable, 'touchEnd', this.touchEnd);
+        removeEvent(document, 'mouseup', this.mouseUp);
+        removeEvent(document, 'touchEnd', this.touchEnd);
         removeEvent(this.marker, 'click', this.markerClick);
         removeEvent(this.marker, 'touchend', this.markerClick);
         removeEvent(document, 'click', this.hideMarker);
         this.options.location.destroy();
 
-        var spans = byClassName(this.selectable, 'user_selection_true');
+        var spans = byClassName(document, 'user_selection_true');
         this.removeTextSelection(spans);
-        var i, closes = byClassName(this.selectable, 'closewrap');
+        var i, closes = byClassName(document, 'closewrap');
         for (i=closes.length; i--;){
             closes[i].parentNode.removeChild(closes[i]);
         }
-        var indices = byClassName(this.selectable, 'masha_index');
+        var indices = byClassName(document, 'masha_index');
         for (i=indices.length; i--;){
             indices[i].parentNode.removeChild(indices[i]);
         }
@@ -185,7 +185,7 @@ MaSha.prototype = {
      */
 
     mouseUp: function(e){
-        if (e.target.className == 'masha-marker') {
+        if (hasClass(e.target, 'masha-marker')) {
             return;
         }
         /*
@@ -234,15 +234,8 @@ MaSha.prototype = {
         preventDefault(e);
         stopEvent(e);
 
-        //var target = (e.target || e.srcElement);
-        //
-        //if (hasClass(this.marker, 'masha-marker-bar')){
-        //    if (!hasClass(target, 'masha-social') && !hasClass(target, 'masha-marker')){
-        //        return;
-        //    }
-        //}
         removeClass(this.marker, 'show');
-/*
+
 
         this.addSelection();
         this.updateHash();
@@ -250,17 +243,14 @@ MaSha.prototype = {
         if (this.options.onMark){
             this.options.onMark.call(this);
         }
-        if (this.options.selectMessage){
-            this._showMessage();
-        }
 
-        if (hasClass(target, 'masha-social') ){
-            var pattern = target.getAttribute('data-pattern');
-            if (pattern){
-                var new_url = pattern.replace('{url}', encodeURIComponent(window.location.toString()));
-                this.openShareWindow(new_url);
-            }
-        }*/
+        //if (hasClass(target, 'masha-social') ){
+        //    var pattern = target.getAttribute('data-pattern');
+        //    if (pattern){
+        //        var new_url = pattern.replace('{url}', encodeURIComponent(window.location.toString()));
+        //        this.openShareWindow(new_url);
+        //    }
+        //}
     },
  
 
@@ -315,7 +305,7 @@ MaSha.prototype = {
     deleteSelections: function(numclasses){
         for(var i=numclasses.length; i--;){
             var numclass = numclasses[i];
-            var spans = byClassName(this.selectable, numclass);
+            var spans = byClassName(document, numclass);
             var closewrap = firstWithClass(spans[spans.length-1], 'closewrap');
             closewrap.parentNode.removeChild(closewrap);
 
@@ -336,7 +326,7 @@ MaSha.prototype = {
 
     isInternal: function(node){
         while (node.parentNode){
-            if (node == this.selectable){
+            if (node == document){
                 return true;
             }
             node = node.parentNode;
@@ -776,7 +766,7 @@ MaSha.prototype = {
         var parent_ = parentWithClass(node, 'user_selection_true');
         if (parent_){
             parent_ = /(num\d+)(?:$| )/.exec(parent_.className)[1];
-            range.setStart(firstTextNode(firstWithClass(this.selectable, parent_)), 0);
+            range.setStart(firstTextNode(firstWithClass(document, parent_)), 0);
             merges.push(parent_);
         }
         while (node){
@@ -792,7 +782,7 @@ MaSha.prototype = {
         last = parentWithClass(last, 'user_selection_true');
         if (last){
             last = /(num\d+)(?:$| )/.exec(last.className)[1];
-            var tnodes = textNodes(lastWithClass(this.selectable, last)); // XXX lastTextNode
+            var tnodes = textNodes(lastWithClass(document, last)); // XXX lastTextNode
             var lastNode = tnodes[tnodes.length-1];
             range.setEnd(lastNode, lastNode.length);
         }
@@ -812,10 +802,9 @@ MaSha.prototype = {
         range = this.checkSelection(range);
         range = this.mergeSelections(range);
 
-
         var class_name = 'num'+this.counter;
         // generating hash part for this range
-        this.ranges[class_name] = this.serializeRange(range);
+        //this.ranges[class_name] = this.serializeRange(range);
 
         range.wrapSelection(class_name+' user_selection_true');
         this.addSelectionEvents(class_name);
@@ -825,7 +814,7 @@ MaSha.prototype = {
         var timeoutHover=false;
         var this_ = this;
 
-        var wrappers = byClassName(this.selectable, class_name);
+        var wrappers = byClassName(document, class_name);
         for (var i=wrappers.length;i--;){
             addEvent(wrappers[i], 'mouseover', function(){
                 for (var i=wrappers.length;i--;){
@@ -844,7 +833,7 @@ MaSha.prototype = {
                         for (var i=wrappers.length;i--;){
                             removeClass(wrappers[i], 'hover');
                         }
-                    }, 2000);
+                    }, 0);
                 }
             });
         }
@@ -878,7 +867,7 @@ MaSha.prototype = {
     enumerateElements: function(){
         // marks first text node in each visual block element:
         // inserts a span with special class and ID before it
-        var node = this.selectable;
+        var node = document;
         this.captureCount = this.captureCount || 0;
         var this_ = this;
 
@@ -939,7 +928,7 @@ MaSha.prototype = {
     },
     getFirstTextNode: function(numclass){
         if(!numclass) { return null; }
-        var tnode = byClassName(this.selectable, 'masha_index'+numclass)[0];
+        var tnode = byClassName(document, 'masha_index'+numclass)[0];
         if (tnode) {
             if (tnode.nextSibling.nodeType == 1){
                 return tnode.nextSibling.childNodes[0];
