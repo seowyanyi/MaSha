@@ -81,12 +81,24 @@ MaSha.defaultOptions = {
                                                ['inline', 'none']) == -1;
     }
 };
+//
+//function recurse(element) {
+//    if (element.childNodes.length > 0)
+//        for (var i = 0; i < element.childNodes.length; i++)
+//            recurse(element.childNodes[i]);
+//
+//    if (element.nodeType == Node.TEXT_NODE && /\S/.test(element.nodeValue))
+//        console.log(element;
+//}
+
+function getAllTextNodes() {
+    console.log(document.getElementsByTagName('div'));
+    return document.getElementsByTagName('div');
+}
 
 MaSha.prototype = {
     init: function(){ // domready
-        this.selectable = (typeof this.options.selectable == 'string'?
-                             document.getElementById(this.options.selectable):
-                             this.options.selectable);
+        //this.selectable = getAllTextNodes();
         if (typeof this.options.marker == 'string'){
             this.marker = document.getElementById(this.options.marker);
             if (this.marker === null){
@@ -104,7 +116,7 @@ MaSha.prototype = {
         }
         this.regexp = new RegExp(this.options.regexp, 'ig');
 
-        if (!this.selectable) return;
+        //if (!this.selectable) return;
 
         this.isIgnored = this.constructIgnored(this.options.ignored);
     
@@ -114,16 +126,16 @@ MaSha.prototype = {
         //cleanWhitespace(this.selectable);
     
         // enumerate block elements containing a text
-        this.enumerateElements();
+        //this.enumerateElements();
 
         var hasTouch = ('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch; // from modernizr
 
         if(!hasTouch){
             this.mouseUp = bind(this.mouseUp, this);
-            addEvent(this.selectable, 'mouseup', this.mouseUp);
+            addEvent(document, 'mouseup', this.mouseUp);
         } else {
             this.touchEnd = bind(this.touchEnd, this);
-            addEvent(this.selectable, 'touchend', this.touchEnd);
+            addEvent(document, 'touchend', this.touchEnd);
         }
 
         this.markerClick = bind(this.markerClick, this);
@@ -177,6 +189,7 @@ MaSha.prototype = {
          */
 
         var markerCoord = getPageXY(e); // outside timeout function because of IE
+        console.log(markerCoord);
         window.setTimeout(bind(function(){
             this.showMarker(markerCoord);
         }, this), 1);
@@ -287,12 +300,8 @@ MaSha.prototype = {
      */
 
     showMarker: function(markerCoord){
-        var regexp = new RegExp(this.options.regexp, 'g');
         var text = window.getSelection().toString();
-
-        if (text == '' || !regexp.test(text)) return;
-        if (!this.rangeIsSelectable()) return;
-
+        if (text == '') return;
         var coords = this.getMarkerCoords(this.marker, markerCoord);
 
         this.marker.style.top = coords.y + 'px';
